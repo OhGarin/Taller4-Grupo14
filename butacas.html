@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es-VE">
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selección de asientos</title>
+    <style>
+        body {
+            background-image: url("img/fondo.png");
+            background-repeat: repeat; 
+            font-family: "Open Sans", sans-serif;
+            background-color: #346480;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .asientos {
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            grid-template-rows: repeat(15, 1fr);
+            justify-items: center;
+            align-items: center;
+            width: max-content;
+        }
+
+        .screen {
+            width: 80%;
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #e2dcf4;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .asiento {
+            width: fit-content;
+            height: fit-content;
+            line-height: 0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .asiento-leyenda{
+            font-size: 50px;
+            background-color: #ffffff;
+            width: 50px;
+            height: 50px;
+            border-radius: 5px;
+            position: relative;
+            transition: background-color 0.3s;
+        }
+
+        .asiento-leyenda.selected {
+            background-color: #60ed8a;
+        }
+
+        .asiento-leyenda.occupied {
+            background-color: #ff6b6b;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .legend div {
+            display: flex;
+            align-items: center;
+        }
+        .espacio{
+            padding: 10px;
+        }
+        .boton-transparente {
+            background-color: transparent;
+            height: auto;
+            width: 30;
+            height: 30;
+            padding: 0;
+            border: none;
+            line-height: 0;
+        }
+
+        .fondo-asientos {
+            background-color: #0f2c3c;;
+            border-radius: 25px;
+            padding: 20px;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .texto-leyenda {
+            color: #ffffff;
+        }
+
+        h1 {
+            color: #ffffff;
+        }
+
+        @media (max-width: 767px) {
+            .boton-transparente img{
+                width: 17px;
+            }
+            body{
+                width: 100%;
+            }
+            .legend{
+                max-width: 100%;
+                margin: 0;
+            }
+            .espacio{
+                margin: 0px;
+            }
+            .asiento-leyenda, .asiento-leyenda.selected, .asiento-leyenda.occupied{
+                width: 20px;
+            }
+
+        }
+        
+        .botones button{
+            background-color: rgba(0, 0, 0, 0);
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .botones img{
+            width: 60px;
+        }
+        button:hover {
+            background-color: #1c3644; 
+        }
+
+    </style>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', () => {
+            configurar()
+        });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const funcionId = urlParams.get('funcionId');
+        const auditorioId = urlParams.get('auditorioId');
+        const cineId = urlParams.get('cineId');
+
+        
+        
+        let cine = cineId;
+        let sala = auditorioId;
+        let funcion = funcionId;
+        let butacasReservadas = []
+        let eventSource
+
+        function configurar() {
+            colocarFilaAsientos();
+            eventSource = new EventSource("https://cinexunidos-production.up.railway.app/theatres/"+ cine + "/auditoriums/" + sala + "/showtimes/" + funcion + "/reservation-updates")
+            eventSource.onmessage = mensajesButacas;
+
+            const sop = document.createElement('div');
+            sop.classList.add('funcion');
+            sop.innerHTML = `
+                <div class="botones">
+                    <button onclick="location.href='chats.html'">
+                        <img src="img/icono-soporte.png" alt="soporte">
+                    </button>
+                </div>
+                `;
+                document.querySelector('.soporte').appendChild(sop);
+        }
+
+        function mensajesButacas(event) {
+            const eventData = JSON.parse(event.data);
+
+            console.log(eventData);
+
+            if (eventData.theatreId === cine && eventData.auditoriumId === sala && eventData.showtimeId === funcion && !(butacasReservadas.includes(eventData.seat))) {
+                switch (eventData.result) {
+                    case 'SEAT_RESERVED':
+                        setOcupado(eventData.seat);
+                        break;
+                    case 'SEAT_RELEASED':
+                        setDisponible(eventData.seat);
+                        break;
+                }
+            }
+        }
+
+        async function getButacas(idCine, idSala, idFuncion){
+            const respuesta = await fetch("https://cinexunidos-production.up.railway.app/theatres/" + idCine + "/auditoriums/" + idSala + "/showtimes/" + idFuncion);
+            const butacas = await respuesta.json();
+            return butacas.seats;
+        }
+
+        async function reservarButaca(idCine, idSala, idFuncion, idButaca) {
+            const respuesta = await fetch("https://cinexunidos-production.up.railway.app/theatres/" + idCine + "/auditoriums/" + idSala + "/showtimes/" + idFuncion + "/reserve", {
+                method: "POST",
+                body: `{
+                    "seat": "${idButaca}"
+                }`,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+            });
+            return respuesta;
+        }
+
+        async function borrarReservaButaca(idCine, idSala, idFuncion, idButaca) {
+            const respuesta = await fetch("https://cinexunidos-production.up.railway.app/theatres/" + idCine + "/auditoriums/" + idSala + "/showtimes/" + idFuncion + "/reserve", {
+                method: "DELETE",
+                body: `{
+                    "seat": "${idButaca}"
+                }`,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+            });
+            return respuesta;
+        }
+
+        async function colocarFilaAsientos(){
+            const filas = 15;
+            const columnas = 15;
+            const butacas = await getButacas(cine, sala, funcion);
+            let numFila = 1;
+            for (let fila in butacas) {
+                const butacasFila = butacas[fila];
+                for (let columna = 0; columna < butacasFila.length; columna++) {
+                    const estadoAsiento = butacasFila[columna];
+
+                    let imagenAsiento = "img/disponible.png";
+                    let imgAlt = "disponible";
+
+                    if(estadoAsiento === 1 || estadoAsiento === 2) {
+                        imagenAsiento = "img/ocupado.png";
+                        imgAlt = "ocupado"
+                    }
+
+                    if(estadoAsiento >= 0) {
+                        const divElement = document.createElement("div");
+                        divElement.className = "asiento";
+                        divElement.id = `${fila}${columna}`;
+                        divElement.style = `grid-column: ${columna};grid-row: ${numFila}`;
+                        divElement.innerHTML = `<button class="boton-transparente" onclick="reservar('${fila}', '${columna}')">
+                            <img src="${imagenAsiento}" alt="Asiento ${imgAlt}" width="40" height="40" id="img${fila}${columna}">
+                        </button>`
+                        displayAsientos.appendChild(divElement);
+                    }
+                }
+                numFila++;
+            }
+        }
+
+        function setOcupado(id) {
+            const img = document.getElementById('img' + id);
+            img.src = "img/ocupado.png";
+            img.alt = "Asiento ocupado";
+        }
+
+        function setDisponible(id) {
+            const img = document.getElementById('img' + id);
+            img.src = "img/disponible.png";
+            img.alt = "Asiento disponible";
+        }
+
+        function setSeleccionado(id) {
+            const img = document.getElementById('img' + id);
+            img.src = "img/seleccionado.png";
+            img.alt = "Asiento seleccionado";
+        }
+
+        async function reservar(fila, columna) {
+            const idButaca = `${fila}${columna}`;
+            if (butacasReservadas.includes(idButaca)) {
+                const respuesta = await borrarReservaButaca(cine, sala, funcion, idButaca);
+                if (respuesta.ok) {
+                    butacasReservadas.splice(butacasReservadas.indexOf(idButaca), 1);
+                    setDisponible(idButaca);
+                }
+            } else {
+                const respuesta = await reservarButaca(cine, sala, funcion, idButaca);
+                if (respuesta.ok) {
+                    setSeleccionado(idButaca);
+                    butacasReservadas.push(idButaca);
+                }
+            }
+        }
+        
+    </script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
+</head>
+
+<body>
+    <h1>Selección de puestos</h1>
+    
+    <div class="fondo-asientos">
+        <div class="asientos" id="displayAsientos">
+        </div>
+
+        <div class="screen">Pantalla</div>
+
+        <div class="legend">
+            <div class="espacio">
+                <div class="asiento-leyenda"></div>
+                <span class="texto-leyenda">Disponible</span>
+            </div>
+            <div class="espacio">
+                <div class="asiento-leyenda selected"></div>
+                <span class="texto-leyenda">Seleccionado</span>
+            </div>
+            <div class="espacio">
+                <div class="asiento-leyenda occupied"></div>
+                <span class="texto-leyenda">Ocupado</span>
+            </div>
+        </div>
+
+        <div class="soporte">
+        </div>
+    </div>
+</body>
+</html>

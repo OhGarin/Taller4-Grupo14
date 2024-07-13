@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es-VE">
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+  <title>Chat de soporte y ayuda</title>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
+  <script>
+
+    let socket
+
+    function sendMessage(nombre, mensaje) {
+        const message = mensaje;
+        if (message !== '') {
+            const chatMessages = document.querySelector('.chat-messages');
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            messageElement.innerHTML = `<small>${nombre}</small><br>${message}`;
+            chatMessages.appendChild(messageElement);
+            messageInput.value = '';
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }
+
+    function botonEnviarMensaje(){
+        const messageInput = document.getElementById('messageInput');
+        socket.emit('send-message', messageInput.value);
+    }
+
+    function eventMessage(){
+        // Event listener
+        document.getElementById("messageInput").addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                botonEnviarMensaje();
+            }
+        });
+    }
+
+    function entrarSoporte(){
+        const nombreDeUsuario=usuario.value
+        nombreUsuario.innerHTML=nombreDeUsuario
+        if (nombreDeUsuario){
+            paginaChat.style.display='flex';
+            paginaEntrarChat.style.display='none';
+                socket = io("https://cinexunidos-production.up.railway.app", {
+             auth: {
+                token: 'LALUNA19',
+                name: nombreDeUsuario,
+            },
+            });
+            socket.on('new-message', (payload)=>{
+                const { id, message, name } = payload;
+                sendMessage(name, message)
+            });
+        }
+
+        if(!nombreDeUsuario){
+            paginaChat.style.display='none';
+            paginaEntrarChat.style.display='flex';
+            mensaje.innerHTML="Debe colocar un nombre de usuario"
+        }
+    }
+
+    function cerrarSoporte(){
+        paginaChat.style.display='none';
+        paginaEntrarChat.style.display='flex';
+        const chatMessages = document.querySelector('.chat-messages');
+        chatMessages.innerHTML = '';
+        socket.close();
+    }
+
+    </script>
+
+    <style>
+        body {
+        margin: 0;
+        padding: 0;
+        font-family: "Open Sans", sans-serif;
+        min-height: 85vh;
+        }
+
+        header {
+        background-color: #25475b;
+        color: #fff;
+        height: 15vh;
+        display: flex;
+        justify-content: center;
+        }
+
+        header img {
+            margin: 0;
+            padding-left: 10px;
+        }
+
+        .container {
+        display: none;
+        justify-content: center;
+        align-items: center;
+        min-height: 85vh;
+        flex-direction: column;
+        gap: 15px;
+        }
+
+        /* Chat Window Styles */
+        .chat-window {
+        background-color: #f0f0f0;
+        border-radius: 8px;
+        box-shadow: 0px 0px 20px rgb(193, 193, 193);
+        }
+
+        .chat-area {
+        height: 400px;
+        overflow-y: scroll;
+        padding: 20px;
+        }
+
+        .chat-messages {
+        display: flex;
+        flex-direction: column;
+        }
+
+        .message{
+        margin-bottom: 10px;
+        background-color: #fff;
+        padding: 10px;
+        border-radius: 4px;
+        }
+
+        .user-input {
+        display: flex;
+        align-items: center;
+        padding: 20px;
+        background-color: #fff;
+        }
+
+        .text-input {
+        flex-grow: 1;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        }
+
+        .sendButton {
+        padding: 8px 16px;
+        margin-left: 10px;
+        background-color: #007bff;
+        border: none;
+        border-radius: 4px;
+        color: #fff;
+        cursor: pointer;
+        }
+
+        .sendButton:hover {
+        background-color: #0056b3;
+        }
+
+        #salirSoporte {
+        padding: 8px 16px;
+        margin-left: 10px;
+        background-color: #c5382e;
+        border: none;
+        border-radius: 4px;
+        color: #fff;
+        cursor: pointer;
+        }
+
+        #salirSoporte:hover {
+        background-color: #6c1105;
+        }
+
+        .chat-name {
+        padding-left: 20px;
+        display: flex;
+        align-items: center;
+        margin: 0;
+        font-size: 17pt;
+        font-family: "Quicksand", sans-serif;
+        font-weight: 600;
+        width: 500px;
+        height: 100px;
+        background-color: #1c3644;
+        color: white;
+        border-radius: 8px 8px 0px 0px;
+        overflow: hidden;
+        }
+
+        .container{
+            background-image: url("img/interrogacion.png");
+        }
+
+
+        .entrarChat{
+            width: 100%;   
+            height: 85vh;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            background-image: url("img/interrogacion.png");
+        }
+        
+        .imgSoporte, .usuarioChat{
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        .usuarioChat{
+            flex-direction: column;
+        }
+        .usuarioChat h1{
+            color: #1c3644;
+        }
+        .imgSoporte img{
+            width: 700px;
+        }
+        .soporteInput input{
+            width: 500px;
+            height: 50px;
+            border-radius: 5px;
+        }
+        .user-input input{
+            height: 50px;
+            border-radius: 5px;
+        }
+        .soporteInput button, .user-input button {
+            font-family: "Open Sans", sans-serif;
+            background-color: #346480; /* Color de fondo */
+            color: #ffffff; /* Color del texto (blanco en este caso) */
+            border: none; /* Sin borde */
+            padding: 10px 20px; /* Espaciado interno (ajústalo según tus necesidades) */
+            border-radius: 5px; /* Bordes redondeados */
+            cursor: pointer; /* Cambia el cursor al pasar por encima */
+            height: 64px;
+        }
+        .soporteInput button:hover, .user-input button:hover {
+            background-color: #1c3644; 
+        }
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .imgSoporte {
+                display: none; 
+            }
+            .soporteInput {
+                display: flex;
+            }
+
+        }
+        @media (max-width: 767px) {
+            .imgSoporte {
+                display: none; 
+            }
+            .soporteInput {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .soporteInput input{
+                width: 300px;
+            }
+            .soporteInput button{
+                width: 300px;
+                margin: 0;
+            }
+            .paginaEntrarChat{
+                width: 100%;
+            }
+            .usuarioChat{
+                width: 100%;
+                align-items: center;
+            }
+            .chat-window{
+                width: 300px;
+            }
+            .chat-name{
+                width: 280px;
+            }
+        }
+
+    </style>
+</head>
+
+<body onload="eventMessage()">
+  <header>
+    <img src="img/cinexunidos.png" alt="logo">
+  </header>
+  <div id="paginaChat" class="container">
+    <div class="chat-window">
+        <p class="chat-name" id="nombreUsuario"></p>
+      <div class="chat-area">
+        <div class="chat-messages">
+          <!-- Chat Messages -->
+        </div>
+      </div>
+      <div class="user-input">
+        <input type="text" id="messageInput" class="text-input" placeholder="Mensaje">
+        <button onclick="botonEnviarMensaje()" id="sendButton" class="sendButton">Send</button>
+      </div>
+    </div>
+    <button onclick="cerrarSoporte()" id="salirSoporte">Salir</button>
+  </div>
+        <div id="paginaEntrarChat" class="entrarChat">
+            <div class="imgSoporte">
+                <img src="img/soporte.png" alt="">
+            </div>
+            <div class="usuarioChat">
+                <h1>Soporte</h1>
+                <div class="soporteInput">
+                    <input type="text" id="usuario" class="text-input" placeholder="Ingrese su nombre">
+                    <button onclick="entrarSoporte()" id="abrirSoporte" class="sendButton">Entrar</button>
+                </div>
+            </div>
+            <lr> <p id="mensaje"></p> </lr>
+        </div>
+</body>
+</html>

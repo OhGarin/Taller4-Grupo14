@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cines</title>
+
+    <script>
+        const url = 'https://cinexunidos-production.up.railway.app';
+        const peliculasMostradas = new Set();
+
+        function mostrarSeccion(seccion) {
+            const currentDisplayedSection = document.querySelector('.visible');
+            if (currentDisplayedSection) {
+                currentDisplayedSection.classList.remove('visible');
+            }
+            seccion.classList.add('visible');
+        }
+
+
+        function mostrarFunciones(nombrePelicula) {
+            const peliculasContainer = document.querySelector('.peliculas');
+            peliculasContainer.innerHTML = '';
+
+            fetch(url + '/theatres')
+                .then(response => response.json())
+                .then(cines => {
+                    cines.forEach(cine => {
+                        cine.auditoriums.forEach(auditorio => {
+                            auditorio.showtimes.forEach(funcion => {
+                                if (funcion.movie.name === nombrePelicula) {
+                                    const funcionId= funcion.id;
+                                    const cineId = cine.id; 
+                                    const auditorioId = auditorio.id;
+                                    
+                                    const funcionDiv = document.createElement('div');
+                                    funcionDiv.classList.add('funcion');
+                                    funcionDiv.innerHTML = `
+                                        <p>Cine: ${cine.name}</p>
+                                        <p>Auditorio: ${auditorio.name}</p>
+                                        <p>Hora: ${funcion.startTime}</p>
+                                        <div class="botones">
+                                            <button onclick="location.href='butacas.html?cineId=${cineId}&auditorioId=${auditorioId}&funcionId=${funcionId}'">Elegir asientos</button>
+
+                                        </div>
+                                    `;
+                                    peliculasContainer.appendChild(funcionDiv);
+                                }
+                            });
+                        });
+                    });
+                });
+        }
+
+
+        function mostrarPeliculas() {
+            mostrarSeccion(document.querySelector('.peliculas'));
+            const endpoint = "/theatres";
+
+            fetch(url + endpoint)
+            
+                .then(response => response.json())
+                .then(cines => {
+                    console.log(cines);
+                    cines.forEach(cine => {
+                        cine.auditoriums.forEach(auditorio => {
+                            auditorio.showtimes.forEach(funcion => {
+                                const posterPelicula = url+'/'+funcion.movie.poster;
+                                const nombrePelicula = funcion.movie.name;
+                                if (!peliculasMostradas.has(nombrePelicula)) {
+                                    peliculasMostradas.add(nombrePelicula);
+                                    const peliculaDiv = document.createElement('div');
+                                    peliculaDiv.classList.add('pelicula');
+                                    peliculaDiv.innerHTML = `
+                                        <img src="${posterPelicula}" alt="${posterPelicula}">
+                                        <h3>${nombrePelicula}</h3>
+                                        <div class="botones">
+                                            <button onclick="mostrarFunciones('${nombrePelicula}')">Mostrar funciones</button>
+                                        </div>
+                                    `;
+                                    document.querySelector('.peliculas').appendChild(peliculaDiv);
+                                }
+                            });
+                        });
+                    });
+                });
+        }
+    </script>
+
+    <style>
+        
+        body{
+            background-color: #25475b;
+            font-family: "Open Sans", sans-serif;
+            font-optical-sizing: auto;
+        }
+        header img{
+            width: 139px;
+        }
+        header{
+            display: flex;
+            justify-content: center;
+        }
+        h3{
+            color: white;
+            font-weight: 500;
+        }
+        p{
+            color: white;
+            font-weight: 100;
+        }
+        .funcion{
+            background-color: white;
+            padding: 20px;
+            border-radius: 20px;
+            margin: 20px 0;
+            width: 170px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .funcion p{
+            color: black;
+        }
+        .pelicula{
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .peliculas{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            padding: auto;
+            justify-items: center;
+        }
+        .peliculas img{
+            width: 210px;
+            border-width: 2px;
+            border-style: solid;
+            border-color: white;
+        }
+        button {
+            font-family: "Open Sans", sans-serif;
+            background-color: #346480; /* Color de fondo */
+            color: #ffffff; /* Color del texto (blanco en este caso) */
+            border: none; /* Sin borde */
+            padding: 10px 20px; /* Espaciado interno (ajústalo según tus necesidades) */
+            border-radius: 5px; /* Bordes redondeados */
+            cursor: pointer; /* Cambia el cursor al pasar por encima */
+        }
+        button:hover {
+            background-color: #1c3644; 
+        }
+        @media (min-width: 768px) and (max-width: 1024px) {
+        .peliculas {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        }
+
+        /* Phone styles (less than 768px) */
+        @media (max-width: 767px) {
+        .peliculas {
+            grid-template-columns: 1fr;
+        }
+        }
+
+    </style>
+</head>
+
+
+<body onload="mostrarPeliculas()">
+    <header>
+        <img src="img/cinexunidos.png" alt="">
+    </header>
+    <hr>
+    <div class="inicioTaller">
+        <div class="t"></div>
+        <div class="peliculas"></div>
+        <div class="funciones"></div>
+
+    </div>
+</body>
+
+</html>
+
