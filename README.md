@@ -1,2 +1,9 @@
 # Taller4-Grupo14
-Taller 4 Program web grupo 14
+Cómo ejecutar
+Ejecutar desde el archivo "taller.html" del repositorio:
+
+$ npx live server
+Créditos
+Melissa Nessi
+Daniela Cruz
+Moisés Suárez
