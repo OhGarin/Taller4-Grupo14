@@ -249,7 +249,16 @@
             .soporteInput {
                 display: flex;
             }
-
+            .entrarChat{
+                display: flex;
+                width: 100%;
+                align-items: center;
+                justify-content: center;
+            }
+            .soporteInput input{
+                width: 300px;
+            }
+            
         }
         @media (max-width: 767px) {
             .imgSoporte {
@@ -267,8 +276,11 @@
                 width: 300px;
                 margin: 0;
             }
-            .paginaEntrarChat{
+            .entrarChat{
+                display: flex;
                 width: 100%;
+                align-items: center;
+                justify-content: center;
             }
             .usuarioChat{
                 width: 100%;
@@ -315,7 +327,6 @@
                     <button onclick="entrarSoporte()" id="abrirSoporte" class="sendButton">Entrar</button>
                 </div>
             </div>
-            <lr> <p id="mensaje"></p> </lr>
         </div>
 </body>
 </html>
